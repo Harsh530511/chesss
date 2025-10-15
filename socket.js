@@ -1,30 +1,116 @@
+// socket.js
 const express = require("express");
-const http = require("http");
+const { createServer } = require("http");
 const { Server } = require("socket.io");
+const path = require("path");
 
 const app = express();
-const server = http.createServer(app);  // <— this line defines `server`
-const io = new Server(server);
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
-const PORT = process.env.PORT || 8080;
+// Serve static frontend files from public folder
+app.use(express.static(path.join(__dirname, "public")));
 
-// Serve static files (your chess front-end)
-app.use(express.static("public"));
+// Player management
+let totalPlayers = 0;
+let players = {};
+let waiting = {
+  1: [],
+  15: [],
+  30: []
+};
+let matches = {
+  1: [],
+  15: [],
+  30: []
+};
 
-// Socket.io events
-io.on("connection", (socket) => {
-  console.log("🟢 A player connected:", socket.id);
+// Utility functions
+function removeSocketFromWaiting(socket) {
+  [1, 15, 30].forEach(timer => {
+    const index = waiting[timer].indexOf(socket.id);
+    if (index > -1) waiting[timer].splice(index, 1);
+  });
+}
 
-  socket.on("move", (data) => {
-    socket.broadcast.emit("move", data); // send move to other player
+function fireTotalPlayers() {
+  io.emit("total_players_count_change", totalPlayers);
+}
+
+function setMatch(oppId, socketId, timer) {
+  console.log(`Match created: ${oppId} vs ${socketId} for ${timer} min`);
+
+  players[oppId].emit("match_made", "w", timer);
+  players[socketId].emit("match_made", "b", timer);
+
+  // Sync game state
+  players[oppId].on("sync_state", (fen, turn) => {
+    players[socketId].emit("sync_state_from_server", fen, turn);
+  });
+  players[socketId].on("sync_state", (fen, turn) => {
+    players[oppId].emit("sync_state_from_server", fen, turn);
+  });
+
+  // Game over
+  players[oppId].on("game_over", winner => {
+    players[socketId].emit("game_over_from_server", winner);
+  });
+  players[socketId].on("game_over", winner => {
+    players[oppId].emit("game_over_from_server", winner);
+  });
+}
+
+// Debug waiting queues
+function debugWaiting() {
+  console.log("⏱ Waiting queues:", waiting);
+}
+
+function playRequest(socket, timer) {
+  if (waiting[timer].length > 0) {
+    const oppId = waiting[timer].splice(0, 1)[0];
+    matches[timer].push({ [oppId]: socket.id });
+    setMatch(oppId, socket.id, timer);
+    return;
+  }
+
+  if (!waiting[timer].includes(socket.id)) {
+    waiting[timer].push(socket.id);
+    debugWaiting();
+  }
+}
+
+// Connection handling
+function onConnect(socket) {
+  console.log(`🟢 Player connected: ${socket.id}`);
+  totalPlayers++;
+  fireTotalPlayers();
+
+  socket.on("want_to_play", timer => {
+    console.log(`Player ${socket.id} wants to play with timer ${timer}`);
+    playRequest(socket, timer);
   });
 
   socket.on("disconnect", () => {
-    console.log("🔴 Player disconnected:", socket.id);
+    console.log(`🔴 Player disconnected: ${socket.id}`);
+    removeSocketFromWaiting(socket);
+    totalPlayers--;
+    fireTotalPlayers();
   });
+}
+
+// Socket.IO connection
+io.on("connection", socket => {
+  players[socket.id] = socket;
+  onConnect(socket);
 });
 
 // Start server
-server.listen(PORT, () => {
+const PORT = process.env.PORT || 8080;
+httpServer.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });

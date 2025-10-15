@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 });
-const socket = io("chesss-production.up.railway.app");
+const socket = io("https://chesss-production.up.railway.app/");
 
 
 socket.on("total_players_count_change", function (totalplayersCount) {
@@ -237,6 +237,7 @@ socket.on("game_over_from_server", function (winner) {
   
 
 });
+
 
 
 

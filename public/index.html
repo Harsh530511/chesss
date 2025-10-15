@@ -41,9 +41,18 @@
 
     <script src="./lib/chessboardjs/js/chessboard-1.0.0.min.js"></script>
     <script src="./script.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io(); // connects automatically to your server
+  socket.on("connect", () => {
+    console.log("🟢 Connected to server:", socket.id);
+  });
+</script>
+
 
 
 
 </body>
+
 
 </html>

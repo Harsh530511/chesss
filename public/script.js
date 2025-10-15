@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 });
-const socket = io("http://localhost:3000");
+const socket = io();
 
 
 socket.on("total_players_count_change", function (totalplayersCount) {
@@ -237,4 +237,5 @@ socket.on("game_over_from_server", function (winner) {
   
 
 });
+
 

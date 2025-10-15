@@ -8,7 +8,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
+    origin: "https://https://chesss-production.up.railway.app/",
     methods: ["GET", "POST"]
   }
 });

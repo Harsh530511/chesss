@@ -19,16 +19,8 @@ app.use(express.static(path.join(__dirname, "public")));
 // Player management
 let totalPlayers = 0;
 let players = {};
-let waiting = {
-  1: [],
-  15: [],
-  30: []
-};
-let matches = {
-  1: [],
-  15: [],
-  30: []
-};
+let waiting = { 1: [], 15: [], 30: [] };
+let matches = { 1: [], 15: [], 30: [] };
 
 // Utility functions
 function removeSocketFromWaiting(socket) {
@@ -42,13 +34,14 @@ function fireTotalPlayers() {
   io.emit("total_players_count_change", totalPlayers);
 }
 
+// Create match and relay game events
 function setMatch(oppId, socketId, timer) {
   console.log(`Match created: ${oppId} vs ${socketId} for ${timer} min`);
 
   players[oppId].emit("match_made", "w", timer);
   players[socketId].emit("match_made", "b", timer);
 
-  // Sync game state
+  // Sync moves
   players[oppId].on("sync_state", (fen, turn) => {
     players[socketId].emit("sync_state_from_server", fen, turn);
   });
@@ -56,7 +49,7 @@ function setMatch(oppId, socketId, timer) {
     players[oppId].emit("sync_state_from_server", fen, turn);
   });
 
-  // Game over
+  // Game over events
   players[oppId].on("game_over", winner => {
     players[socketId].emit("game_over_from_server", winner);
   });
@@ -70,6 +63,7 @@ function debugWaiting() {
   console.log("⏱ Waiting queues:", waiting);
 }
 
+// Handle play requests
 function playRequest(socket, timer) {
   if (waiting[timer].length > 0) {
     const oppId = waiting[timer].splice(0, 1)[0];
@@ -84,7 +78,7 @@ function playRequest(socket, timer) {
   }
 }
 
-// Connection handling
+// Handle new connections
 function onConnect(socket) {
   console.log(`🟢 Player connected: ${socket.id}`);
   totalPlayers++;
@@ -100,6 +94,7 @@ function onConnect(socket) {
     removeSocketFromWaiting(socket);
     totalPlayers--;
     fireTotalPlayers();
+    delete players[socket.id]; // Clean up
   });
 }
 

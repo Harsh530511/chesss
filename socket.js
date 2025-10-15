@@ -1,36 +1,30 @@
-// socket.js
 const express = require("express");
-const path = require("path");
-const { createServer } = require("http");
+const http = require("http");
 const { Server } = require("socket.io");
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: { origin: "*", methods: ["GET", "POST"] },
-});
+const server = http.createServer(app);  // <— this line defines `server`
+const io = new Server(server);
 
-// 👇 serve all frontend files (HTML, CSS, JS, sounds, etc.)
-app.use(express.static(path.join(__dirname)));
+const PORT = process.env.PORT || 8080;
 
-// ✅ default route
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
+// Serve static files (your chess front-end)
+app.use(express.static("public"));
 
-
-// Socket logic (keep your game logic later)
+// Socket.io events
 io.on("connection", (socket) => {
-  console.log("✅ New player connected:", socket.id);
-  socket.emit("message", "Welcome to Chess server!");
+  console.log("🟢 A player connected:", socket.id);
+
+  socket.on("move", (data) => {
+    socket.broadcast.emit("move", data); // send move to other player
+  });
 
   socket.on("disconnect", () => {
-    console.log("❌ Player disconnected:", socket.id);
+    console.log("🔴 Player disconnected:", socket.id);
   });
 });
 
-// ✅ Important: Railway provides PORT automatically
-const PORT = process.env.PORT || 3000;
+// Start server
 server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });

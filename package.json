@@ -1,0 +1,17 @@
+{
+  "name": "multiplayer-chess",
+  "version": "1.0.0",
+  "description": "Multiplayer chess game using Node.js, Socket.io, and HTML/CSS/JS",
+  "main": "socket.js",
+  "scripts": {
+    "start": "node socket.js",
+    "dev": "nodemon socket.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

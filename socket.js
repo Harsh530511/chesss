@@ -1,24 +1,23 @@
 // socket.js
 const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
 const path = require("path");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: { origin: "*", methods: ["GET", "POST"] },
 });
 
-// Serve static files (your HTML/CSS/JS)
+// 👇 serve all frontend files (HTML, CSS, JS, sounds, etc.)
 app.use(express.static(path.join(__dirname)));
 
-// Simple route to check if server is alive
+// ✅ default route
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
+
 
 // Socket logic (keep your game logic later)
 io.on("connection", (socket) => {

@@ -1,18 +1,18 @@
 const express = require("express");
-const { createServer } = require("http");
-const { Server } = require("socket.io");
 const path = require("path");
-
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        origin: "*",
-        methods: ["*", "*"]
-    },
 
-});
+// Serve all files in your project directory
 app.use(express.static(path.join(__dirname)));
+
+// Create HTTP server with Socket.IO
+const server = require("http").createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["*"]
+  }
 
 let totalPlayers = 0;
 let players = {};

@@ -3,6 +3,23 @@ body {
     color: white;
 
 }
+/* Desktop / Laptop */
+#myBoard {
+  width: 630px;
+}
+/* Mobile devices */
+@media only screen and (max-width: 768px) {
+  #myBoard {
+    width: 320px;  /* smaller board */
+  }
+  #btn-parent {
+    flex-direction: row;  /* buttons side by side */
+    gap: 10px;
+  }
+  #total_players {
+    font-size: 14px;
+  }
+}
 
 .display-f {
     display: flex;
@@ -64,4 +81,5 @@ body {
     font-size: 40px;
     color: #ffffff;
 }
+
 

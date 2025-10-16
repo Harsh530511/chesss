@@ -20,16 +20,16 @@ const gameOverSound = document.getElementById('gameOverSound');
 // Timer
 // ==========================
 function startTimer(seconds, container, onComplete) {
-    let startTime = new Date().getTime();
-    let ms = seconds * 1000;
+    let startTime = Date.now();
+    let remaining = seconds * 1000; // in ms
     const display = document.getElementById(container);
+    let timer = null;
 
-    const timer = setInterval(() => {
-        let now = Math.max(0, ms - (new Date().getTime() - startTime));
-        let m = Math.floor(now / 60000);
-        let s = Math.floor(now / 1000) % 60;
-        s = (s < 10 ? "0" : "") + s;
-        display.innerHTML = `${m}:${s}`;
+    function update() {
+        const now = Math.max(0, remaining - (Date.now() - startTime));
+        const m = Math.floor(now / 60000);
+        const s = Math.floor(now / 1000) % 60;
+        display.innerHTML = `${m}:${s < 10 ? '0' : ''}${s}`;
 
         if (now <= 0) {
             clearInterval(timer);
@@ -38,13 +38,22 @@ function startTimer(seconds, container, onComplete) {
             socket.emit("game_over", winner);
             if (onComplete) onComplete();
         }
-    }, 250);
+    }
+
+    timer = setInterval(update, 250);
 
     return {
-        pause: () => { ms -= new Date().getTime() - startTime; clearInterval(timer); },
-        resume: () => { startTime = new Date().getTime(); startTimer(ms/1000, container, onComplete); }
+        pause: () => {
+            remaining = Math.max(0, remaining - (Date.now() - startTime));
+            clearInterval(timer);
+        },
+        resume: () => {
+            startTime = Date.now();
+            timer = setInterval(update, 250);
+        }
     };
 }
+
 
 // ==========================
 // Drag & Drop

@@ -1,4 +1,3 @@
-// socket.js
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
@@ -6,24 +5,37 @@ const path = require("path");
 
 const app = express();
 const httpServer = createServer(app);
+
+// ✅ Allow CORS from your deployed frontend
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
+    origin: [
+      "https://chesss-production.up.railway.app", // your Railway URL
+      "http://localhost:3000", // local testing
+      "http://127.0.0.1:3000"
+    ],
     methods: ["GET", "POST"]
-  }
+  },
 });
 
-// Serve static frontend files from public folder
-app.use(express.static(path.join(__dirname, "public")));
+// ✅ Serve all frontend files from the same server
+app.use(express.static(path.join(__dirname)));
 
-// Player management
+// ✅ Variables to track players and matches
 let totalPlayers = 0;
 let players = {};
-let waiting = { 1: [], 15: [], 30: [] };
-let matches = { 1: [], 15: [], 30: [] };
+let waiting = {
+  1: [],
+  15: [],
+  30: [],
+};
+let matches = {
+  1: [],
+  15: [],
+  30: [],
+};
 
-// Utility functions
-function removeSocketFromWaiting(socket) {
+function removesocketfromwaiting(socket) {
   [1, 15, 30].forEach(timer => {
     const index = waiting[timer].indexOf(socket.id);
     if (index > -1) waiting[timer].splice(index, 1);
@@ -31,82 +43,70 @@ function removeSocketFromWaiting(socket) {
 }
 
 function fireTotalPlayers() {
-  io.emit("total_players_count_change", totalPlayers);
+  io.emit('total_players_count_change', totalPlayers);
 }
 
-// Create match and relay game events
-function setMatch(oppId, socketId, timer) {
-  console.log(`Match created: ${oppId} vs ${socketId} for ${timer} min`);
+function ondisconnect(socket) {
+  removesocketfromwaiting(socket);
+  totalPlayers--;
+  fireTotalPlayers();
+  delete players[socket.id];
+}
 
-  players[oppId].emit("match_made", "w", timer);
-  players[socketId].emit("match_made", "b", timer);
+function setmatch(oppid, socketid, timer) {
+  console.log(`⚔️ Match created: ${oppid} vs ${socketid} (${timer} min)`);
 
-  // Sync moves
-  players[oppId].on("sync_state", (fen, turn) => {
-    players[socketId].emit("sync_state_from_server", fen, turn);
+  players[oppid].emit("match_made", "w", timer);
+  players[socketid].emit("match_made", "b", timer);
+
+  // Relay move updates
+  players[oppid].on("sync_state", (fen, turn) => {
+    players[socketid].emit("sync_state_from_server", fen, turn);
   });
-  players[socketId].on("sync_state", (fen, turn) => {
-    players[oppId].emit("sync_state_from_server", fen, turn);
+  players[socketid].on("sync_state", (fen, turn) => {
+    players[oppid].emit("sync_state_from_server", fen, turn);
   });
 
-  // Game over events
-  players[oppId].on("game_over", winner => {
-    players[socketId].emit("game_over_from_server", winner);
+  // Handle game over
+  players[oppid].on("game_over", winner => {
+    players[socketid].emit("game_over_from_server", winner);
   });
-  players[socketId].on("game_over", winner => {
-    players[oppId].emit("game_over_from_server", winner);
+  players[socketid].on("game_over", winner => {
+    players[oppid].emit("game_over_from_server", winner);
   });
 }
 
-// Debug waiting queues
-function debugWaiting() {
-  console.log("⏱ Waiting queues:", waiting);
-}
-
-// Handle play requests
-function playRequest(socket, timer) {
+function playreq(socket, timer) {
   if (waiting[timer].length > 0) {
-    const oppId = waiting[timer].splice(0, 1)[0];
-    matches[timer].push({ [oppId]: socket.id });
-    setMatch(oppId, socket.id, timer);
-    return;
-  }
-
-  if (!waiting[timer].includes(socket.id)) {
+    const oppid = waiting[timer].shift();
+    matches[timer].push({ [oppid]: socket.id });
+    setmatch(oppid, socket.id, timer);
+  } else {
     waiting[timer].push(socket.id);
-    debugWaiting();
+    console.log(`⏱ Player ${socket.id} waiting for opponent in ${timer}-min queue`);
   }
 }
 
-// Handle new connections
-function onConnect(socket) {
+function onconnect(socket) {
   console.log(`🟢 Player connected: ${socket.id}`);
+  players[socket.id] = socket;
   totalPlayers++;
   fireTotalPlayers();
 
   socket.on("want_to_play", timer => {
-    console.log(`Player ${socket.id} wants to play with timer ${timer}`);
-    playRequest(socket, timer);
+    console.log(`Player ${socket.id} wants to play ${timer} min game`);
+    playreq(socket, timer);
   });
 
   socket.on("disconnect", () => {
     console.log(`🔴 Player disconnected: ${socket.id}`);
-    removeSocketFromWaiting(socket);
-    totalPlayers--;
-    fireTotalPlayers();
-    delete players[socket.id]; // Clean up
+    ondisconnect(socket);
   });
 }
 
-// Socket.IO connection
-io.on("connection", socket => {
-  players[socket.id] = socket;
-  onConnect(socket);
-});
+io.on("connection", onconnect);
 
-// Start server
 const PORT = process.env.PORT || 8080;
 httpServer.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-

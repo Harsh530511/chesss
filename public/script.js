@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // Auto-detect server URL based on environment
 const socket = io(
   window.location.hostname === "localhost"
-    ? "http://localhost:3000"
+    ? "http://localhost:8080"
     : window.location.origin
 );
 

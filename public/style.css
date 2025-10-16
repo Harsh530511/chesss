@@ -1,85 +1,138 @@
 body {
-    background-color: black;
-    color: white;
-
+  background-color: black;
+  color: white;
+  margin: 0;
+  padding: 0;
 }
-/* Desktop / Laptop */
+
+/* ==========================
+   💻 Desktop / Laptop Layout
+   ========================== */
 #myBoard {
   width: 630px;
 }
-/* Mobile devices */
-@media only screen and (max-width: 768px) {
-  #myBoard {
-    width: 320px;  /* smaller board */
-  }
-  #btn-parent {
-    flex-direction: row;  /* buttons side by side */
-    gap: 10px;
-  }
-  #total_players {
-    font-size: 14px;
-  }
-}
 
 .display-f {
-    display: flex;
-    margin-top: 20px;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 80px;
+  display: flex;
+  margin-top: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 80px;
 }
 
 .timer-button {
-    border: none;
-    border-radius: 4px;
-    background: white;
-    color: black;
-    font-size: 30px;
-    padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  background: white;
+  color: black;
+  font-size: 30px;
+  padding: 4px 10px;
+  transition: all 0.3s ease;
 }
 
 .timer-button:hover {
-    cursor: pointer;
-    background: grey;
-    color: white;
+  cursor: pointer;
+  background: grey;
+  color: white;
 }
 
 #total_players {
-    position: absolute;
-    right: 30px;
-    top: 10px;
-    font-weight: 700px;
-    font-size: 18px;
-
-
+  position: absolute;
+  right: 30px;
+  top: 10px;
+  font-weight: 700;
+  font-size: 18px;
 }
 
 .display-none {
-    display: none;
+  display: none;
 }
 
 #waiting_para {
-    color: white;
-    width: 90vw;
-    text-align: center;
-    font-size: 40px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 40vh;
-
+  color: white;
+  width: 90vw;
+  text-align: center;
+  font-size: 40px;
+  margin: 40vh auto 0 auto;
 }
 
 #youare {
-    font-size: 30px;
-    margin: 0px;
-    color: #ffffff;
-    
+  font-size: 30px;
+  margin: 0;
+  color: #ffffff;
 }
 
 #timerDis {
-    margin: 0px;
-    font-size: 40px;
-    color: #ffffff;
+  margin: 0;
+  font-size: 40px;
+  color: #ffffff;
+}
+
+/* =====================
+   📱 Mobile Optimization
+   ===================== */
+@media only screen and (max-width: 768px) {
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: black;
+    overflow-x: hidden;
+  }
+
+  /* Bigger board for mobile */
+  #myBoard {
+    width: 95vw !important;
+    max-width: 95vw;
+    height: auto;
+    margin-top: 10px;
+  }
+
+  /* Container of board + buttons */
+  .display-f {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+  }
+
+  /* ✅ Make buttons appear in one row, centered */
+  #btn-parent {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Adjust buttons for touch */
+  .timer-button {
+    font-size: 18px;
+    padding: 8px 14px;
+    flex: 0 0 auto; /* prevents stretching */
+    white-space: nowrap;
+  }
+
+  #total_players {
+    font-size: 14px;
+    right: 10px;
+    top: 8px;
+  }
+
+  #waiting_para {
+    font-size: 22px;
+    margin-top: 35vh;
+  }
+
+  #youare,
+  #timerDis {
+    font-size: 22px;
+  }
 }
 
 

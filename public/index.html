@@ -39,17 +39,15 @@
   <h1 style="text-align: center;">Chess Game</h1>
 
   <!-- Main Flex Container -->
-  <div id="main-ele" class="display-f">
-    <!-- Chess Board -->
-    <div id="myBoard" ></div>
-
-    <!-- Timer Buttons -->
-    <div id="btn-parent" style="display: flex; gap: 20px; flex-direction: column;">
-      <button data-time="1" class="timer-button">1 Min</button>
-      <button data-time="15" class="timer-button">15 Min</button>
-      <button data-time="30" class="timer-button">30 Min</button>
+  <div id="main-ele">
+    <div id="myBoard"></div>
+    <div id="btn-parent" class="dispay-f">
+        <button data-time="1" class="timer-button">1 Min</button>
+        <button data-time="15" class="timer-button">15 Min</button>
+        <button data-time="30" class="timer-button">30 Min</button>
     </div>
-  </div>
+</div>
+
 
   <!-- Waiting Message -->
   <p id="waiting_para" class="display-none">Waiting for Opponent...</p>

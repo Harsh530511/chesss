@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // Auto-detect server URL based on environment
 const socket = io(
   window.location.hostname === "localhost"
-    ? "http://localhost:3000"
+    ? "http://localhost:8080"
     : window.location.origin
 );
 
@@ -185,6 +185,7 @@ socket.on("game_over_from_server", (winner) => {
     if (timerInst) timerInst.pause();
     window.location.reload();
 });
+
 
 
 

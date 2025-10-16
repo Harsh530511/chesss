@@ -9,14 +9,11 @@ const httpServer = createServer(app);
 // ✅ Allow CORS from your deployed frontend
 const io = new Server(httpServer, {
   cors: {
-    origin: [
-      "https://chesss-production.up.railway.app", // your Railway URL
-      "http://localhost:3000", // local testing
-      "http://127.0.0.1:3000"
-    ],
-    methods: ["GET", "POST"]
+    origin: "https://chesss-production.up.railway.app",
+    methods: ["GET", "POST"],
   },
 });
+
 
 // ✅ Serve all frontend files from the same server
 app.use(express.static(path.join(__dirname)));

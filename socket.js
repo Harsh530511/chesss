@@ -5,6 +5,7 @@ const path = require("path");
 
 const app = express();
 const httpServer = createServer(app);
+const SERVER_VERSION = "v1.0.0"; // ⬅️ increase this when redeploying
 
 // ✅ Allow CORS from your deployed frontend
 const io = new Server(httpServer, {
@@ -90,6 +91,7 @@ function playreq(socket, timer) {
 
 function onconnect(socket) {
   console.log(`🟢 Player connected: ${socket.id}`);
+  socket.emit("server_version", SERVER_VERSION);
   players[socket.id] = socket;
   totalPlayers++;
   fireTotalPlayers();

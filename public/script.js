@@ -142,6 +142,17 @@ const socket = io(
     : window.location.origin
 );
 
+// ✅ Auto-reload when new version deployed
+socket.on("server_version", (serverVersion) => {
+  const localVersion = localStorage.getItem("server_version");
+  if (localVersion && localVersion !== serverVersion) {
+    alert("New update available — refreshing!");
+    localStorage.setItem("server_version", serverVersion);
+    location.reload();
+  } else {
+    localStorage.setItem("server_version", serverVersion);
+  }
+});
 
 socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
 socket.on("disconnect", () => console.log("🔴 Socket disconnected"));

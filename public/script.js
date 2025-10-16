@@ -1,243 +1,181 @@
-var board1 = Chessboard('myBoard', 'start')
-var board = null
-var game = new Chess()
-var $status = $('#status')
-var $fen = $('#fen')
-var $pgn = $('#pgn')
+// ==========================
+// script.js
+// ==========================
+
+// Initialize chessboard and game
+var board = null;
+var game = new Chess();
+var $status = $('#status');
+var $fen = $('#fen');
+var $pgn = $('#pgn');
 let c_player = null;
-let timerinst = null;
-let currentmatchtime = null;
+let timerInst = null;
+let currentMatchTime = null;
+
 const moveSound = document.getElementById('moveSound');
 const captureSound = document.getElementById('captureSound');
 const gameOverSound = document.getElementById('gameOverSound');
 
-function startTimer(seconds, container, oncomplete) {
-  let startTime, timer, obj, ms = seconds * 1000,
-    display = document.getElementById(container);
-  obj = {};
-  obj.resume = function () {
-    startTime = new Date().getTime();
-    timer = setInterval(obj.step, 250); // adjust this number to affect granularity
-    // lower numbers are more accurate, but more CPU-expensive
-  };
-  obj.pause = function () {
-    ms = obj.step();
-    clearInterval(timer);
-  };
-  obj.step = function () {
-    let now = Math.max(0, ms - (new Date().getTime() - startTime)),
-      m = Math.floor(now / 60000), s = Math.floor(now / 1000) % 60;
-    s = (s < 10 ? "0" : "") + s;
-    display.innerHTML = m + ":" + s;
-    if (now == 0) {
-      const winner = game.turn() === 'b' ? 'White' : 'Black';
-      alert(winner + " Won The Match");
-      window.location.reload();
-      socket.emit("game_over", winner);
+// ==========================
+// Timer
+// ==========================
+function startTimer(seconds, container, onComplete) {
+    let startTime = new Date().getTime();
+    let ms = seconds * 1000;
+    const display = document.getElementById(container);
 
-      clearInterval(timer);
-      obj.resume = function () { };
-      if (oncomplete) oncomplete();
-    }
-    return now;
-  };
-  obj.resume();
-  return obj;
+    const timer = setInterval(() => {
+        let now = Math.max(0, ms - (new Date().getTime() - startTime));
+        let m = Math.floor(now / 60000);
+        let s = Math.floor(now / 1000) % 60;
+        s = (s < 10 ? "0" : "") + s;
+        display.innerHTML = `${m}:${s}`;
+
+        if (now <= 0) {
+            clearInterval(timer);
+            const winner = game.turn() === 'b' ? 'White' : 'Black';
+            alert(winner + " Won The Match");
+            socket.emit("game_over", winner);
+            if (onComplete) onComplete();
+        }
+    }, 250);
+
+    return {
+        pause: () => { ms -= new Date().getTime() - startTime; clearInterval(timer); },
+        resume: () => { startTime = new Date().getTime(); startTimer(ms/1000, container, onComplete); }
+    };
 }
 
-function onDragStart(source, piece, position, orientation) {
-  if (game.turn() != c_player) {
-    return false;
-  }
-  // do not pick up pieces if the game is over
-  if (game.game_over()) return false
-
-  // only pick up pieces for the side to move
-  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-    (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-    return false
-  }
+// ==========================
+// Drag & Drop
+// ==========================
+function onDragStart(source, piece) {
+    if (game.turn() !== c_player) return false;
+    if (game.game_over()) return false;
+    if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+        (game.turn() === 'b' && piece.search(/^w/) !== -1)) return false;
 }
 
 function onDrop(source, target) {
-  // see if the move is legal
-  var move = game.move({
-    from: source,
-    to: target,
-    promotion: 'q' // NOTE: always promote to a queen for example simplicity
-  })
+    const move = game.move({ from: source, to: target, promotion: 'q' });
+    if (!move) return 'snapback';
 
-  // illegal move
-  if (move === null) return 'snapback'
-  if (move.captured) {
-  captureSound.play();
-} else {
-  moveSound.play();
+    if (move.captured) captureSound.play();
+    else moveSound.play();
+
+    socket.emit('sync_state', game.fen(), game.turn());
+    updateStatus();
+
+    if (timerInst) timerInst.pause();
 }
 
-  console.log(game.fen());
-  socket.emit('sync_state', game.fen(), game.turn());
-  if (timerinst) {
-
-    timerinst.pause();
-
-  } else {
-    timerinst = startTimer(Number(currentmatchtime) * 60, "timerDis", function () {
-      socket.on("game_over_from_server", function (winner) {
-        gameOverSound.play();
-        alert(winner + " Won The Match");
-        window.location.reload();
-      });
-    });
-
-  }
-  updateStatus()
-}
+// Called after every change
 function onChange() {
-  if (game.game_over()) {
-    
-
-    if (game.in_checkmate()) {
-      const winner = game.turn() === 'b' ? 'White' : 'Black';
-      socket.emit("game_over", winner);
+    if (game.game_over() && game.in_checkmate()) {
+        const winner = game.turn() === 'b' ? 'White' : 'Black';
+        socket.emit("game_over", winner);
     }
-  }
 }
-// update the board position after the piece snap
-// for castling, en passant, pawn promotion
-function onSnapEnd() {
-  board.position(game.fen())
-}
+
+function onSnapEnd() { board.position(game.fen()); }
 
 function updateStatus() {
-  var status = ''
+    let status = '';
+    let moveColor = game.turn() === 'w' ? 'White' : 'Black';
 
-  var moveColor = 'White'
-  if (game.turn() === 'b') {
-    moveColor = 'Black'
-  }
+    if (game.in_checkmate()) status = `Game over, ${moveColor} is in checkmate.`;
+    else if (game.in_draw()) status = 'Game over, drawn position';
+    else status = `${moveColor} to move${game.in_check() ? ', in check' : ''}`;
 
-  // checkmate?
-  if (game.in_checkmate()) {
-    status = 'Game over, ' + moveColor + ' is in checkmate.'
-  }
-
-  // draw?
-  else if (game.in_draw()) {
-    status = 'Game over, drawn position'
-  }
-
-  // game still on
-  else {
-    status = moveColor + ' to move'
-
-    // check?
-    if (game.in_check()) {
-      status += ', ' + moveColor + ' is in check'
-    }
-  }
-
-  $status.html(status)
-  $fen.html(game.fen())
-  $pgn.html(game.pgn())
+    $status.html(status);
+    $fen.html(game.fen());
+    $pgn.html(game.pgn());
 }
 
+// ==========================
+// Chessboard config
+// ==========================
 var config = {
-  draggable: true,
-  position: 'start',
-  onDragStart: onDragStart,
-  onDrop: onDrop,
-  onChange: onChange,
-  onSnapEnd: onSnapEnd
-}
-board = Chessboard('myBoard', config)
+    draggable: true,
+    position: 'start',
+    onDragStart,
+    onDrop,
+    onChange,
+    onSnapEnd
+};
+board = Chessboard('myBoard', config);
+updateStatus();
 
-updateStatus()
-function handlebuttonclick(event) {
-  const timer = event.target.getAttribute('data-time');
-  socket.emit('want_to_play', timer);
-  $('#main-ele').hide();
-  $('#waiting_para').show();
+// ==========================
+// Timer Buttons
+// ==========================
+function handleButtonClick(event) {
+    const timer = event.target.dataset.time;
+    socket.emit('want_to_play', timer);
+    $('#main-ele').hide();
+    $('#waiting_para').show();
 }
+
 document.addEventListener("DOMContentLoaded", function () {
-  const buttons = document.getElementsByClassName("timer-button");
-  for (let index = 0; index < buttons.length; index++) {
-    const button = buttons[index];
-    button.addEventListener('click', handlebuttonclick)
-
-  }
-
+    const buttons = document.getElementsByClassName("timer-button");
+    for (let button of buttons) {
+        button.addEventListener('click', handleButtonClick);
+    }
 });
+
+// ==========================
+// Socket.IO connection
+// ==========================
 const socket = io("https://chesss-production.up.railway.app/");
 
+socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
+socket.on("disconnect", () => console.log("🔴 Socket disconnected"));
 
-socket.on("total_players_count_change", function (totalplayersCount) {
-  $('#total_players').html("Total Players : " + totalplayersCount);
+// Total players update
+socket.on("total_players_count_change", (count) => {
+    $('#total_players').html("Total Players : " + count);
 });
+
+// Match made
 socket.on("match_made", (color, timer) => {
-  c_player = color;
+    c_player = color;
+    $('#main-ele').show();
+    $('#waiting_para').hide();
 
-  $('#main-ele').show();
-  $('#waiting_para').hide();
-  const currentplayer = color === 'b' ? "BLACK" : "WHITE";
-  $('#btn-parent').html("<p id='youare'>" + currentplayer +
-    "</p><p id='timerDis'> </p>"
+    const currentPlayer = color === 'b' ? 'BLACK' : 'WHITE';
+    $('#btn-parent').html(`
+        <p id='youare'>${currentPlayer}</p>
+        <p id='timerDis'></p>
+    `);
 
-  )
+    game.reset();
+    board.clear();
+    board.start();
+    board.orientation(currentPlayer.toLowerCase());
+    currentMatchTime = timer;
 
-  game.reset();
-  board.clear();
-  board.start();
-  board.orientation(currentplayer.toLowerCase());
-  currentmatchtime = timer;
-  if (game.turn() === c_player) {
-    timerinst = startTimer(Number(timer) * 60, "timerDis", function () {
-      socket.on("game_over_from_server", function (winner) {
-        gameOverSound.play();
-        alert(winner + " Won The Match");
-        window.location.reload();
-      });
-    });
-  }
-  else {
-    timerinst = null;
-    $("#timerDis").html(timer + ":00");
-
-  }
-
-
-
-
-});
-socket.on('sync_state_from_server', function (fen, turn) {
-  game.load(fen);
-  game.setTurn(turn);
-  board.position(fen);
-  if (timerinst) {
-
-    timerinst.resume();
-
-  } else {
-    timerinst = startTimer(Number(currentmatchtime) * 60, "timerDis", function () {
-      socket.on("game_over_from_server", function (winner) {
-        gameOverSound.play();
-        alert(winner + " Won The Match");
-        window.location.reload();
-      });
-    });
-
-  }
-});
-socket.on("game_over_from_server", function (winner) {
-  gameOverSound.play();
-  alert(winner + " Won The Match");
-  timerinst.pause();
-  window.location.reload();
-
-  
-
+    if (game.turn() === c_player) {
+        timerInst = startTimer(timer * 60, "timerDis", () => {});
+    } else {
+        timerInst = null;
+        $("#timerDis").html(`${timer}:00`);
+    }
 });
 
+// Sync game state
+socket.on('sync_state_from_server', (fen, turn) => {
+    game.load(fen);
+    game.setTurn(turn);
+    board.position(fen);
 
+    if (timerInst) timerInst.resume();
+    else timerInst = startTimer(currentMatchTime * 60, "timerDis", () => {});
+});
 
-
+// Game over
+socket.on("game_over_from_server", (winner) => {
+    gameOverSound.play();
+    alert(`${winner} Won The Match`);
+    if (timerInst) timerInst.pause();
+    window.location.reload();
+});

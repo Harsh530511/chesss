@@ -126,7 +126,12 @@ document.addEventListener("DOMContentLoaded", function () {
 // ==========================
 // Socket.IO connection
 // ==========================
-const socket = io("https://chesss-production.up.railway.app");
+// Auto-detect server URL based on environment
+const socket = io(
+  window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : window.location.origin
+);
 
 
 socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
@@ -180,5 +185,6 @@ socket.on("game_over_from_server", (winner) => {
     if (timerInst) timerInst.pause();
     window.location.reload();
 });
+
 
 

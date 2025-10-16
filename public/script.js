@@ -126,7 +126,10 @@ document.addEventListener("DOMContentLoaded", function () {
 // ==========================
 // Socket.IO connection
 // ==========================
-const socket = io("https://chesss-production.up.railway.app/");
+const socket = io("https://chesss-production.up.railway.app", {
+  transports: ["websocket", "polling"]
+});
+
 
 socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
 socket.on("disconnect", () => console.log("🔴 Socket disconnected"));
@@ -179,3 +182,4 @@ socket.on("game_over_from_server", (winner) => {
     if (timerInst) timerInst.pause();
     window.location.reload();
 });
+

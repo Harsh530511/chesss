@@ -20,7 +20,7 @@ const io = new Server(httpServer, {
 
 
 // ✅ Serve all frontend files from the same server
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname,"public")));
 
 // ✅ Variables to track players and matches
 let totalPlayers = 0;

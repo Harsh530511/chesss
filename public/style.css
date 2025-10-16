@@ -72,67 +72,19 @@ body {
    📱 Mobile Optimization
    ===================== */
 @media only screen and (max-width: 768px) {
-  body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: black;
-    overflow-x: hidden;
-  }
+    #total_players {
+        position: static;      /* let it flow naturally */
+        text-align: center;    /* centered above board */
+        margin-bottom: 10px;   /* space before board */
+        font-size: 16px;
+    }
 
-  /* Bigger board for mobile */
-  #myBoard {
-    width: 95vw !important;
-    max-width: 95vw;
-    height: auto;
-    margin-top: 10px;
-  }
-
-  /* Container of board + buttons */
-  .display-f {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    width: 100%;
-  }
-
-  /* ✅ Make buttons appear in one row, centered */
-  #btn-parent {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 10px;
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  /* Adjust buttons for touch */
-  .timer-button {
-    font-size: 18px;
-    padding: 8px 14px;
-    flex: 0 0 auto; /* prevents stretching */
-    white-space: nowrap;
-  }
-
-  #total_players {
-    font-size: 14px;
-    right: 10px;
-    top: 8px;
-  }
-
-  #waiting_para {
-    font-size: 22px;
-    margin-top: 35vh;
-  }
-
-  #youare,
-  #timerDis {
-    font-size: 22px;
-  }
+    h1 {
+        font-size: 28px;       /* shrink header a bit */
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
 }
 
 

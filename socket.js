@@ -43,17 +43,17 @@ function fireTotalPlayers() {
 
 // 🧨 Handle disconnects — give win to opponent if mid-match
 function ondisconnect(socket) {
-    console.log(`🔴 Player disconnected: ${socket.id}`);
+   // console.log(`🔴 Player disconnected: ${socket.id}`);
 
     const oppid = socket.opponent;
     if (oppid && players[oppid]) {
-        console.log(`💀 ${socket.id} disconnected mid-match. ${oppid} wins.`);
+       // console.log(`💀 ${socket.id} disconnected mid-match. ${oppid} wins.`);
 
         // Get the remaining player's color
         const remainingPlayerColor = players[oppid].color;
         const disconnectedPlayerColor = remainingPlayerColor === 'White' ? 'Black' : 'White';
         
-        console.log(`🎯 Sending win to ${oppid} (${remainingPlayerColor})`);
+       // console.log(`🎯 Sending win to ${oppid} (${remainingPlayerColor})`);
 
         // Send proper OBJECT, not string
         const gameOverData = {
@@ -78,7 +78,7 @@ function ondisconnect(socket) {
 
 // ⚔️ Create a match between two players
 function setmatch(oppid, socketid, timer) {
-    console.log(`⚔️ Match created: ${oppid} vs ${socketid} (${timer} min)`);
+   // console.log(`⚔️ Match created: ${oppid} vs ${socketid} (${timer} min)`);
 
     // store opponent references
     players[oppid].opponent = socketid;
@@ -88,7 +88,7 @@ function setmatch(oppid, socketid, timer) {
     players[oppid].color = "White";
     players[socketid].color = "Black";
     
-    console.log(`🎨 Colors assigned: ${oppid} = White, ${socketid} = Black`);
+   // console.log(`🎨 Colors assigned: ${oppid} = White, ${socketid} = Black`);
 
     players[oppid].emit("match_made", "w", timer);
     players[socketid].emit("match_made", "b", timer);
@@ -104,7 +104,7 @@ function setmatch(oppid, socketid, timer) {
 
     // 🏁 Handle manual game over - FIXED VERSION
     players[oppid].on("game_over", (data) => {
-        console.log(`🎮 Game over from WHITE (${oppid}):`, data);
+       // console.log(`🎮 Game over from WHITE (${oppid}):`, data);
         if (players[socketid]) {
             // Ensure data is properly formatted
             const gameOverData = typeof data === "string" ? {
@@ -113,15 +113,15 @@ function setmatch(oppid, socketid, timer) {
                 message: `${data} won by checkmate! 🏆`
             } : data;
             
-            console.log(`📤 Forwarding to BLACK (${socketid}):`, gameOverData);
+           // console.log(`📤 Forwarding to BLACK (${socketid}):`, gameOverData);
             players[socketid].emit("game_over_from_server", gameOverData);
         } else {
-            console.log(`❌ BLACK player (${socketid}) not found`);
+           // console.log(`❌ BLACK player (${socketid}) not found`);
         }
     });
 
     players[socketid].on("game_over", (data) => {
-        console.log(`🎮 Game over from BLACK (${socketid}):`, data);
+       // console.log(`🎮 Game over from BLACK (${socketid}):`, data);
         if (players[oppid]) {
             // Ensure data is properly formatted
             const gameOverData = typeof data === "string" ? {
@@ -130,10 +130,10 @@ function setmatch(oppid, socketid, timer) {
                 message: `${data} won by checkmate! 🏆`
             } : data;
             
-            console.log(`📤 Forwarding to WHITE (${oppid}):`, gameOverData);
+           // console.log(`📤 Forwarding to WHITE (${oppid}):`, gameOverData);
             players[oppid].emit("game_over_from_server", gameOverData);
         } else {
-            console.log(`❌ WHITE player (${oppid}) not found`);
+           // console.log(`❌ WHITE player (${oppid}) not found`);
         }
     });
 }
@@ -146,7 +146,7 @@ function playreq(socket, timer) {
     setmatch(oppid, socket.id, timer);
   } else {
     waiting[timer].push(socket.id);
-    console.log(`⏱ Player ${socket.id} waiting in ${timer}-min queue`);
+    //console.log(`⏱ Player ${socket.id} waiting in ${timer}-min queue`);
   }
 }
 
@@ -164,13 +164,13 @@ function onconnect(socket) {
   });
 
   socket.on("want_to_play", (timer) => {
-    console.log(`🎮 ${socket.id} wants to play a ${timer}-min game`);
+   // console.log(`🎮 ${socket.id} wants to play a ${timer}-min game`);
     playreq(socket, timer);
   });
 
   socket.on("cancel_matchmaking", () => {
     removesocketfromwaiting(socket);
-    console.log(`❌ Player ${socket.id} canceled matchmaking`);
+   // console.log(`❌ Player ${socket.id} canceled matchmaking`);
   });
 
   socket.on("disconnect", () => {

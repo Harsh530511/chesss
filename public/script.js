@@ -46,7 +46,7 @@ function startTimer(seconds, container, onComplete) {
             const winner = timedOutPlayer === 'w' ? 'Black' : 'White';
             const loser = timedOutPlayer === 'w' ? 'White' : 'Black';
             
-            console.log(`⏰ Timeout detected: ${loser} timed out, ${winner} wins`);
+          //  console.log(`⏰ Timeout detected: ${loser} timed out, ${winner} wins`);
             
             // Create the game over data
             const gameOverData = {
@@ -60,7 +60,7 @@ function startTimer(seconds, container, onComplete) {
             socket.emit("game_over", gameOverData);
             
             // Immediately show defeat popup for THIS player (the one who timed out)
-            console.log(`💔 Showing immediate defeat popup for ${loser}`);
+          //  console.log(`💔 Showing immediate defeat popup for ${loser}`);
             showGameOverPopup(gameOverData);
 
             if (onComplete) onComplete();
@@ -97,7 +97,7 @@ function showWaitingScreen(timer) {
     searchStartTime = Date.now();
     updateSearchTime();
     
-    console.log(`🔍 Searching for ${timer}-min game...`);
+    //console.log(`🔍 Searching for ${timer}-min game...`);
 }
 
 function hideWaitingScreen() {
@@ -231,12 +231,15 @@ socket.on("server_version", (serverVersion) => {
 });
 
 socket.on("connect", () => {
-    console.log("✅ Socket connected:", socket.id);
+   // console.log("✅ Socket connected:", socket.id);
     // Request player count on connect
     socket.emit('get_player_count');
 });
 
-socket.on("disconnect", () => console.log("🔴 Socket disconnected"));
+socket.on("disconnect", () => {
+    console.log("🔴 Socket disconnected");
+     socket.emit('get_player_count');
+});
 
 // Total players update
 socket.on("total_players_count_change", (count) => {
@@ -248,7 +251,7 @@ socket.on("total_players_count_change", (count) => {
 document.getElementById("cancelWait").addEventListener("click", () => {
     hideWaitingScreen();
     socket.emit("cancel_matchmaking");
-    console.log("❌ Matchmaking cancelled");
+   // console.log("❌ Matchmaking cancelled");
 });
 
 // ==========================
@@ -257,11 +260,11 @@ document.getElementById("cancelWait").addEventListener("click", () => {
 function showGameOverPopup(data) {
     // Prevent multiple popups
     if (document.getElementById("professionalGameOverModal")) {
-        console.log("⚠️ Popup already exists, skipping...");
+      //  console.log("⚠️ Popup already exists, skipping...");
         return;
     }
     
-    console.log("🔄 Showing Game Over Popup for:", data);
+   // console.log("🔄 Showing Game Over Popup for:", data);
     
     // Play game over sound
     if (gameOverSound) gameOverSound.play();
@@ -285,7 +288,7 @@ function showGameOverPopup(data) {
     if (data.winner && c_player) {
         const currentPlayerColor = c_player === 'w' ? 'White' : 'Black';
         isWin = data.winner === currentPlayerColor;
-        console.log(`🎯 Popup logic: Winner=${data.winner}, Current=${currentPlayerColor}, IsWin=${isWin}`);
+      //  console.log(`🎯 Popup logic: Winner=${data.winner}, Current=${currentPlayerColor}, IsWin=${isWin}`);
     }
     
     // Special styling for different reasons
@@ -463,7 +466,7 @@ socket.on('sync_state_from_server', (fen, turn) => {
 
 // Game over event listener
 socket.on("game_over_from_server", (data) => {
-    console.log("🎮 GAME OVER EVENT RECEIVED ON CLIENT:", data);
+   // console.log("🎮 GAME OVER EVENT RECEIVED ON CLIENT:", data);
     
     if (timerInst) timerInst.pause();
     

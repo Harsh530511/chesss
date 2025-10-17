@@ -7,6 +7,7 @@ const app = express();
 const httpServer = createServer(app);
 const SERVER_VERSION = "v1.0.0";
 
+// ✅ Allow CORS from your deployed frontend
 const io = new Server(httpServer, {
   cors: {
     origin: [
@@ -18,12 +19,16 @@ const io = new Server(httpServer, {
   },
 });
 
+// ✅ Serve static frontend files
 app.use(express.static(path.join(__dirname, "public")));
 
+// ✅ Player & Match tracking
 let totalPlayers = 0;
 let players = {};
 let waiting = { 1: [], 15: [], 30: [] };
+let matches = { 1: [], 15: [], 30: [] };
 
+// 🧹 Remove socket from all waiting lists
 function removesocketfromwaiting(socket) {
   [1, 15, 30].forEach(timer => {
     const index = waiting[timer].indexOf(socket.id);
@@ -31,10 +36,12 @@ function removesocketfromwaiting(socket) {
   });
 }
 
+// 🔄 Update all clients with total player count
 function fireTotalPlayers() {
   io.emit("total_players_count_change", totalPlayers);
 }
 
+// 🧨 Handle disconnects — give win to opponent if mid-match
 function ondisconnect(socket) {
     console.log(`🔴 Player disconnected: ${socket.id}`);
 
@@ -42,15 +49,23 @@ function ondisconnect(socket) {
     if (oppid && players[oppid]) {
         console.log(`💀 ${socket.id} disconnected mid-match. ${oppid} wins.`);
 
+        // Get the remaining player's color
         const remainingPlayerColor = players[oppid].color;
         const disconnectedPlayerColor = remainingPlayerColor === 'White' ? 'Black' : 'White';
         
-        players[oppid].emit("game_over_from_server", {
+        console.log(`🎯 Sending win to ${oppid} (${remainingPlayerColor})`);
+
+        // Send proper OBJECT, not string
+        const gameOverData = {
             reason: "disconnect",
             winner: remainingPlayerColor,
             message: `Opponent (${disconnectedPlayerColor}) disconnected — ${remainingPlayerColor} wins! 🏆`
-        });
+        };
+        
+        // IMPORTANT: Send as object
+        players[oppid].emit("game_over_from_server", gameOverData);
 
+        // Clean up opponent reference
         players[oppid].opponent = null;
         players[oppid].color = null;
     }
@@ -61,18 +76,24 @@ function ondisconnect(socket) {
     fireTotalPlayers();
 }
 
+// ⚔️ Create a match between two players
 function setmatch(oppid, socketid, timer) {
     console.log(`⚔️ Match created: ${oppid} vs ${socketid} (${timer} min)`);
 
+    // store opponent references
     players[oppid].opponent = socketid;
     players[socketid].opponent = oppid;
 
+    // Assign colors and store them
     players[oppid].color = "White";
     players[socketid].color = "Black";
     
+    console.log(`🎨 Colors assigned: ${oppid} = White, ${socketid} = Black`);
+
     players[oppid].emit("match_made", "w", timer);
     players[socketid].emit("match_made", "b", timer);
 
+    // ♻️ Relay board state (FEN + turn)
     players[oppid].on("sync_state", (fen, turn) => {
         if (players[socketid]) players[socketid].emit("sync_state_from_server", fen, turn);
     });
@@ -81,12 +102,19 @@ function setmatch(oppid, socketid, timer) {
         if (players[oppid]) players[oppid].emit("sync_state_from_server", fen, turn);
     });
 
-    // 🎯 FIXED: Game over event forwarding
+    // 🏁 Handle manual game over - FIXED VERSION
     players[oppid].on("game_over", (data) => {
         console.log(`🎮 Game over from WHITE (${oppid}):`, data);
         if (players[socketid]) {
-            console.log(`📤 Forwarding to BLACK (${socketid}):`, data);
-            players[socketid].emit("game_over_from_server", data);
+            // Ensure data is properly formatted
+            const gameOverData = typeof data === "string" ? {
+                winner: data,
+                reason: "checkmate",
+                message: `${data} won by checkmate! 🏆`
+            } : data;
+            
+            console.log(`📤 Forwarding to BLACK (${socketid}):`, gameOverData);
+            players[socketid].emit("game_over_from_server", gameOverData);
         } else {
             console.log(`❌ BLACK player (${socketid}) not found`);
         }
@@ -95,17 +123,26 @@ function setmatch(oppid, socketid, timer) {
     players[socketid].on("game_over", (data) => {
         console.log(`🎮 Game over from BLACK (${socketid}):`, data);
         if (players[oppid]) {
-            console.log(`📤 Forwarding to WHITE (${oppid}):`, data);
-            players[oppid].emit("game_over_from_server", data);
+            // Ensure data is properly formatted
+            const gameOverData = typeof data === "string" ? {
+                winner: data,
+                reason: "checkmate", 
+                message: `${data} won by checkmate! 🏆`
+            } : data;
+            
+            console.log(`📤 Forwarding to WHITE (${oppid}):`, gameOverData);
+            players[oppid].emit("game_over_from_server", gameOverData);
         } else {
             console.log(`❌ WHITE player (${oppid}) not found`);
         }
     });
 }
 
+// 🎯 Handle "Want to play" matchmaking
 function playreq(socket, timer) {
   if (waiting[timer].length > 0) {
     const oppid = waiting[timer].shift();
+    matches[timer].push({ [oppid]: socket.id });
     setmatch(oppid, socket.id, timer);
   } else {
     waiting[timer].push(socket.id);
@@ -113,24 +150,27 @@ function playreq(socket, timer) {
   }
 }
 
+// ⚡ On each new connection
 function onconnect(socket) {
   console.log(`🟢 Player connected: ${socket.id}`);
   socket.emit("server_version", SERVER_VERSION);
-  socket.on("get_player_count", () => {
-    socket.emit("total_players_count_change", totalPlayers);
-});
   players[socket.id] = socket;
   totalPlayers++;
   fireTotalPlayers();
 
+  // Handle player count requests
+  socket.on("get_player_count", () => {
+    socket.emit("total_players_count_change", totalPlayers);
+  });
+
   socket.on("want_to_play", (timer) => {
-    console.log(`🎮 ${socket.id} wants to play ${timer} min`);
+    console.log(`🎮 ${socket.id} wants to play a ${timer}-min game`);
     playreq(socket, timer);
   });
 
   socket.on("cancel_matchmaking", () => {
     removesocketfromwaiting(socket);
-    console.log(`❌ ${socket.id} canceled matchmaking`);
+    console.log(`❌ Player ${socket.id} canceled matchmaking`);
   });
 
   socket.on("disconnect", () => {

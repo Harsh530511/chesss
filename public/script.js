@@ -1,5 +1,5 @@
 // ==========================
-// script.js
+// script.js - Final Version
 // ==========================
 
 // Initialize chessboard and game
@@ -30,8 +30,11 @@ function startTimer(seconds, container, onComplete) {
     let remaining = seconds * 1000;
     const display = document.getElementById(container);
     let timer = null;
+    let isPaused = false;
 
     function update() {
+        if (isPaused) return;
+        
         const now = Math.max(0, remaining - (Date.now() - startTime));
         const m = Math.floor(now / 60000);
         const s = Math.floor(now / 1000) % 60;
@@ -39,14 +42,26 @@ function startTimer(seconds, container, onComplete) {
 
         if (now <= 0) {
             clearInterval(timer);
-            const winner = game.turn() === 'b' ? 'White' : 'Black';
+            const timedOutPlayer = game.turn(); // 'w' or 'b'
+            const winner = timedOutPlayer === 'w' ? 'Black' : 'White';
+            const loser = timedOutPlayer === 'w' ? 'White' : 'Black';
             
-            // Consistent object format
-            socket.emit("game_over", {
+            console.log(`⏰ Timeout detected: ${loser} timed out, ${winner} wins`);
+            
+            // Create the game over data
+            const gameOverData = {
                 reason: "timeout",
                 winner: winner,
-                message: `Time over — ${winner} wins! ⏰`
-            });
+                loser: loser,
+                message: `${loser} ran out of time — ${winner} wins! ⏰`
+            };
+            
+            // Emit timeout to server (so opponent gets it)
+            socket.emit("game_over", gameOverData);
+            
+            // Immediately show defeat popup for THIS player (the one who timed out)
+            console.log(`💔 Showing immediate defeat popup for ${loser}`);
+            showGameOverPopup(gameOverData);
 
             if (onComplete) onComplete();
         }
@@ -56,10 +71,12 @@ function startTimer(seconds, container, onComplete) {
 
     return {
         pause: () => {
+            isPaused = true;
             remaining = Math.max(0, remaining - (Date.now() - startTime));
             clearInterval(timer);
         },
         resume: () => {
+            isPaused = false;
             startTime = Date.now();
             timer = setInterval(update, 250);
         }
@@ -238,6 +255,14 @@ document.getElementById("cancelWait").addEventListener("click", () => {
 // Professional Game Over Modal
 // ==========================
 function showGameOverPopup(data) {
+    // Prevent multiple popups
+    if (document.getElementById("professionalGameOverModal")) {
+        console.log("⚠️ Popup already exists, skipping...");
+        return;
+    }
+    
+    console.log("🔄 Showing Game Over Popup for:", data);
+    
     // Play game over sound
     if (gameOverSound) gameOverSound.play();
     
@@ -260,6 +285,7 @@ function showGameOverPopup(data) {
     if (data.winner && c_player) {
         const currentPlayerColor = c_player === 'w' ? 'White' : 'Black';
         isWin = data.winner === currentPlayerColor;
+        console.log(`🎯 Popup logic: Winner=${data.winner}, Current=${currentPlayerColor}, IsWin=${isWin}`);
     }
     
     // Special styling for different reasons
@@ -437,6 +463,8 @@ socket.on('sync_state_from_server', (fen, turn) => {
 
 // Game over event listener
 socket.on("game_over_from_server", (data) => {
+    console.log("🎮 GAME OVER EVENT RECEIVED ON CLIENT:", data);
+    
     if (timerInst) timerInst.pause();
     
     let processedData;

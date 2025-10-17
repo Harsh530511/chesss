@@ -4,70 +4,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess</title><!DOCTYPE html>
-<html lang="en">
+    <title>Chess</title>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess</title>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- chess.js -->
+    <script src="/chess.js"></script>
 
-  <!-- chess.js -->
-  <script src="/chess.js"></script>
+    <!-- chessboard.js CSS -->
+    <link rel="stylesheet" href="/lib/chessboardjs/css/chessboard-1.0.0.min.css">
 
-  <!-- chessboard.js CSS -->
-  <link rel="stylesheet" href="/lib/chessboardjs/css/chessboard-1.0.0.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css">
 
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="/style.css">
-
-  <!-- Socket.IO -->
- <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"
         integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+"
         crossorigin="anonymous"></script>
 </head>
 
 <body>
-  <!-- Total Players -->
-  <p id="total_players">Total Players: 0</p>
+    <!-- Total Players -->
+    <p id="total_players">Total Players: 0</p>
 
-  <!-- Title -->
-  <h1 style="text-align: center;">Chess Game</h1>
+    <!-- Title -->
+    <h1 style="text-align: center;">Chess Game</h1>
 
-  <!-- Main Flex Container -->
-  <div id="main-ele">
-    <div id="myBoard"></div>
-    <div id="btn-parent" class="dispay-f">
-        <button data-time="1" class="timer-button">1 Min</button>
-        <button data-time="15" class="timer-button">15 Min</button>
-        <button data-time="30" class="timer-button">30 Min</button>
+    <!-- Main Flex Container -->
+    <div id="main-ele">
+        <div id="myBoard"></div>
+        <div id="btn-parent" class="dispay-f">
+            <button data-time="1" class="timer-button">1 Min</button>
+            <button data-time="15" class="timer-button">15 Min</button>
+            <button data-time="30" class="timer-button">30 Min</button>
+        </div>
     </div>
-</div>
 
+    <!-- Professional Waiting Screen -->
+    <div id="waitingScreen" class="waiting-screen">
+        <div class="waiting-container">
+            <div class="loading-animation">
+                <div class="chess-piece king"></div>
+                <div class="chess-piece queen"></div>
+                <div class="chess-piece bishop"></div>
+            </div>
+            
+            <h2 class="waiting-title">Finding Opponent</h2>
+            <p class="waiting-subtitle">Preparing your chess battle...</p>
+            
+            <div class="searching-indicator">
+                <div class="searching-dot"></div>
+                <div class="searching-dot"></div>
+                <div class="searching-dot"></div>
+            </div>
+            
+            <div class="queue-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Players Online</span>
+                    <span class="stat-value" id="onlinePlayers">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Searching Time</span>
+                    <span class="stat-value" id="searchTime">0s</span>
+                </div>
+            </div>
+            
+            <button id="cancelWait" class="cancel-button">
+                <span class="cancel-icon">✕</span>
+                Cancel Search
+            </button>
+        </div>
+    </div>
 
-  <!-- Waiting Message -->
-  <p id="waiting_para" class="display-none">Waiting for Opponent...</p>
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2 id="gameOverTitle">Game Over</h2>
+            <p id="gameOverMessage"></p>
+            <button id="gameOverClose">OK</button>
+        </div>
+    </div>
 
-  <!-- Sounds -->
-  <audio id="moveSound" src="/sounds/move-self.mp3"></audio>
-  <audio id="captureSound" src="/sounds/capture.mp3"></audio>
-  <audio id="gameOverSound" src="/sounds/win.mp3"></audio>
+    <!-- Sounds -->
+    <audio id="moveSound" src="/sounds/move-self.mp3"></audio>
+    <audio id="captureSound" src="/sounds/capture.mp3"></audio>
+    <audio id="gameOverSound" src="/sounds/win.mp3"></audio>
 
-  <!-- chessboard.js -->
-  <script src="/lib/chessboardjs/js/chessboard-1.0.0.min.js"></script>
+    <!-- chessboard.js -->
+    <script src="/lib/chessboardjs/js/chessboard-1.0.0.min.js"></script>
 
-  <!-- Custom Script -->
-  <script src="/script.js"></script>
+    <!-- Custom Script -->
+    <script src="/script.js"></script>
 </body>
 
 </html>
-
-  
-
-
-
-

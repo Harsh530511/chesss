@@ -26,21 +26,79 @@
 </head>
 
 <body>
-    <!-- Total Players -->
-    <p id="total_players">Total Players: 0</p>
-
-    <!-- Title -->
-    <h1 style="text-align: center;">Chess Game</h1>
+    <!-- Professional Header -->
+<div id="professionalHeader">
+    <div class="header-container">
+        <div class="logo-section">
+            <div class="chess-icon">♔</div>
+            <h1 class="game-title">Strategic Chess</h1>
+        </div>
+        <div class="players-stats">
+            <div class="stat-badge">
+                <span class="stat-icon">👥</span>
+                <span class="stat-text">
+                    <span class="stat-label">Players Online</span>
+                    <span id="total_players" class="stat-count">0</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Main Flex Container -->
     <div id="main-ele">
-        <div id="myBoard"></div>
-        <div id="btn-parent" class="dispay-f">
+    <div class="game-container">
+        <!-- Game Status (Left Side Above Board) -->
+        <div id="gameStatus" class="game-status-left" style="display:none"></div>
+
+        <!-- Chessboard with Right Side Timers -->
+        <div class="board-with-timers">
+            <!-- Chessboard -->
+            <div id="myBoard" class="chessboard-container"></div>
+            
+            <!-- Control Method Toggle -->
+            <div class="control-toggle-container">
+                <div id="controlMethodToggle" class="control-toggle">
+                    <span id="controlMethodIcon">🖱️</span>
+                    <span id="controlMethodText">Drag & Drop</span>
+                    <span class="dropdown-arrow">▼</span>
+                </div>
+                <div id="controlMethodDropdown" class="control-dropdown">
+                    <div class="control-option" data-method="dragdrop">
+                        <span>🖱️</span>
+                        <span>Drag & Drop</span>
+                    </div>
+                    <div class="control-option" data-method="clickmove">
+                        <span>👆</span>
+                        <span>Click to Move</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side Timers Container -->
+            <div class="right-timers">
+                <!-- Opponent Timer (Top Right) -->
+                <div id="opponentTimerContainer" class="timer-container opponent-timer">
+                    <div class="timer-label">OPPONENT</div>
+                    <div id="opponentTimer" class="timer-display">15:00</div>
+                </div>
+
+                <!-- Player Timer (Bottom Right) -->
+                <div id="playerTimerContainer" class="timer-container player-timer">
+                    <div class="timer-label">YOU</div>
+                    <div id="playerTimer" class="timer-display">15:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div id="btn-parent" class="button-container">
             <button data-time="1" class="timer-button">1 Min</button>
             <button data-time="15" class="timer-button">15 Min</button>
             <button data-time="30" class="timer-button">30 Min</button>
         </div>
     </div>
+</div>
 
     <!-- Professional Waiting Screen -->
     <div id="waitingScreen" class="waiting-screen">
@@ -75,15 +133,6 @@
                 <span class="cancel-icon">✕</span>
                 Cancel Search
             </button>
-        </div>
-    </div>
-
-    <!-- Game Over Modal -->
-    <div id="gameOverModal" class="modal">
-        <div class="modal-content">
-            <h2 id="gameOverTitle">Game Over</h2>
-            <p id="gameOverMessage"></p>
-            <button id="gameOverClose">OK</button>
         </div>
     </div>
 
